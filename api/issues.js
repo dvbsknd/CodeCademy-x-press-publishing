@@ -69,33 +69,51 @@ issuesRouter.post('/', (req, res, next) => {
 
 issuesRouter.put('/:issueId', (req, res, next) => {
     const issueId = req.issue.id;
-    const newData = req.body.issue;
-    if (!newData.name || !newData.description) {
-        res.status(400).send('Required fields missing.')
+    let newData = req.body.issue;
+    if (newData.artistId) {
+        db.get(
+            `SELECT * FROM Artist WHERE Artist.id = ?`,
+            newData.artistId,
+            (err, row) => {
+                if (err) next(err);
+                if (row && newData.name && newData.issueNumber && newData.publicationDate) {
+                    const query = `
+                        UPDATE Issue SET
+                            name = $name,
+                            issue_number = $issueNumber,
+                            publication_date = $publicationDate,
+                            artist_id = $artistId,
+                            series_id = $seriesId
+                        WHERE Issue.id = $id;`
+                    const data = {
+                        $id: issueId,
+                        $name: newData.name,
+                        $issueNumber: newData.issueNumber,
+                        $publicationDate: newData.publicationDate,
+                        $artistId: newData.artistId,
+                        $seriesId: req.series.id
+                    }
+                    db.run(query, data, function(err) {
+                        if (err) next(err);
+                        db.get('SELECT * FROM Issue WHERE Issue.id = ?', issueId, (err, row) => {
+                            res.status(200).json({ issue: row });
+                        })
+                    })
+                } else {
+                    res.status(400).send('Required fields missing.');
+                }
+            }
+        );
     } else {
-        const query = 'UPDATE Issue SET name = $name, description = $description WHERE Issue.id = $id;'
-        const data = {
-            $name: newData.name, 
-            $description: newData.description,
-            $id: issueId
-        }
-        db.run(query, data, function(err) {
-            if (err) next(err);
-            db.get('SELECT * FROM Issue WHERE Issue.id = ?', issueId, (err, row) => {
-                res.status(200).json({ issue: row });
-            })
-        })
+        res.status(400).send('Required fields missing.')
     }
 });
 
 issuesRouter.delete('/:issueId', (req, res, next) => {
-    const issueId = req.issue.id;
-    const query = 'UPDATE Issue SET is_currently_employed = 0;'; 
-    db.run(query, function(err) {
+    console.log(req.issue.id);
+    db.run('DELETE FROM Issue WHERE Issue.id = ?', req.issue.id, function(err) {
         if (err) next(err);
-        db.get('SELECT * FROM Issue WHERE Issue.id = ?', issueId, (err, row) => {
-            res.status(200).json({ issue: row });
-        })
+        res.status(204).send('Deleted.');
     })
 });
 
