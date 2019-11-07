@@ -7,7 +7,7 @@ issuesRouter.param('issueId', (req, res, next, id) => {
     db.get('SELECT * FROM Issue WHERE id = ? AND series_id = ?', id, req.series.id, (err, row) => {
         if (err) next (err);
         if (!row) {
-            res.status(404).send(`${id} not found, sorry.`);
+            res.status(404).send(`Issue ${id} for Series ${req.series.id} does not exist.`);
         } else {
             req.issue = row;
             next();
