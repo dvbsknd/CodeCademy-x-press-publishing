@@ -80,19 +80,19 @@ seriesRouter.put('/:seriesId', (req, res, next) => {
 
 seriesRouter.delete('/:seriesId', (req, res, next) => {
     const seriesId = req.series.id;
-    db.get(
-        `SELECT * FROM Issues WHERE series_id = ?`,
+    db.all(
+        `SELECT * FROM Issue WHERE series_id = ?`,
         seriesId,
-        (err, row) => {
-            if (row) {
-                res.status(400).send('Too many issues.')
+        function (err, row) {
+            if (row.length > 0) {
+                res.status(400).send('Got rows.')
             } else {
                 db.run(
                     `DELETE FROM Series WHERE id = ?`,
                     seriesId,
                     function(err) {
                         if (err) next(err);
-                        res.status(204).send('Deleted');
+                        res.status(204).send();
                     })
                 }
     

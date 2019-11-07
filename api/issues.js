@@ -110,7 +110,6 @@ issuesRouter.put('/:issueId', (req, res, next) => {
 });
 
 issuesRouter.delete('/:issueId', (req, res, next) => {
-    console.log(req.issue.id);
     db.run('DELETE FROM Issue WHERE Issue.id = ?', req.issue.id, function(err) {
         if (err) next(err);
         res.status(204).send('Deleted.');
